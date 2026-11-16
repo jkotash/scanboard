@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Log in · Scanboard{% endblock %}
+{% block content %}
+<h1>Log in</h1>
+<p class="muted">Enter the admin token (the <code>ADMIN_TOKEN</code> environment variable).</p>
+<form class="inline" method="post" action="/login">
+  <input type="password" name="token" placeholder="Admin token" autocomplete="current-password" required>
+  <button type="submit">Log in</button>
+</form>
+{% if error %}<p class="sev sev-CRITICAL">{{ error }}</p>{% endif %}
+{% endblock %}

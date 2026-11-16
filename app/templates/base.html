@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Scanboard{% endblock %}</title>
+  <style>
+    :root { --bg:#f7f7f8; --fg:#1d1d1f; --muted:#6b6b73; --card:#fff; --line:#e3e3e8;
+            --crit:#b42318; --high:#c4320a; --med:#b54708; --low:#475467; --ok:#067647; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg:#141416; --fg:#ececf0; --muted:#9b9ba5; --card:#1d1d21; --line:#2e2e34;
+              --crit:#f97066; --high:#fd853a; --med:#fdb022; --low:#98a2b3; --ok:#47cd89; }
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; font:14px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+    header { display:flex; justify-content:space-between; align-items:center;
+             padding:12px 24px; border-bottom:1px solid var(--line); background:var(--card); }
+    .brand { font-weight:700; font-size:16px; color:var(--fg); text-decoration:none; }
+    main { max-width:1100px; margin:0 auto; padding:24px 16px; }
+    h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:16px; margin:28px 0 8px; }
+    .muted { color:var(--muted); } code { font-size:12px; word-break:break-all; }
+    .table-wrap { overflow-x:auto; background:var(--card); border:1px solid var(--line); border-radius:8px; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { text-align:left; padding:8px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+    th { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+    tr:last-child td { border-bottom:0; }
+    td.num { text-align:right; font-variant-numeric:tabular-nums; }
+    .sev { font-weight:600; } .sev-CRITICAL { color:var(--crit); } .sev-HIGH { color:var(--high); }
+    .sev-MEDIUM { color:var(--med); } .sev-LOW, .sev-UNKNOWN { color:var(--low); }
+    .fix { color:var(--ok); }
+    a { color:inherit; }
+    form.inline { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:8px 0 12px; }
+    button, select, input[type=password] { font:inherit; padding:6px 10px; border:1px solid var(--line);
+             border-radius:6px; background:var(--card); color:var(--fg); }
+    .meta { display:grid; grid-template-columns:max-content 1fr; gap:4px 16px; margin-top:12px; }
+    .empty { padding:24px; text-align:center; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/">Scanboard</a>
+    {% if logged_in %}
+    <form method="post" action="/logout"><button type="submit">Log out</button></form>
+    {% endif %}
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+</body>
+</html>

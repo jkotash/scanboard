@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Projects</h1>
+<p class="muted">Latest scan for every project that reports to this Scanboard.</p>
+
+<div class="table-wrap">
+{% if projects %}
+<table>
+  <thead>
+    <tr>
+      <th>Project</th><th>Latest build</th><th>Branch</th>
+      <th class="num">Critical</th><th class="num">High</th><th class="num">Medium</th><th class="num">Low</th>
+      <th>Pipeline</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for p in projects %}{% set b = p.latest_build %}
+    <tr>
+      <td><a href="/projects/{{ p.name }}">{{ p.name }}</a></td>
+      {% if b %}
+      <td>{{ b.created_at.strftime("%Y-%m-%d %H:%M") }} <span class="muted"><code>{{ b.commit_sha[:8] }}</code></span></td>
+      <td>{{ b.branch }}</td>
+      <td class="num sev sev-CRITICAL">{{ b.critical }}</td>
+      <td class="num sev sev-HIGH">{{ b.high }}</td>
+      <td class="num sev sev-MEDIUM">{{ b.medium }}</td>
+      <td class="num sev sev-LOW">{{ b.low }}</td>
+      <td>{% if b.pipeline_url %}<a href="{{ b.pipeline_url }}" rel="noopener">run</a>{% endif %}</td>
+      {% else %}
+      <td colspan="7" class="muted">No builds reported yet</td>
+      {% endif %}
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty muted">No projects yet. Create one with <code>POST /api/v1/admin/projects</code>, then send a scan to <code>POST /api/v1/ingest</code>.</p>
+{% endif %}
+</div>
+{% endblock %}

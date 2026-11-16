@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} · Scanboard{% endblock %}
+{% block content %}
+<p><a href="/">← All projects</a></p>
+<h1>{{ project.name }}</h1>
+
+{% if latest %}
+<div class="meta">
+  <span class="muted">Image</span><code>{{ latest.image_ref or "—" }}</code>
+  <span class="muted">Digest</span><code>{{ latest.image_digest or "—" }}</code>
+  <span class="muted">Commit</span><code>{{ latest.commit_sha or "—" }}</code>
+  <span class="muted">Branch</span><span>{{ latest.branch or "—" }}</span>
+  <span class="muted">Scanned</span><span>{{ latest.created_at.strftime("%Y-%m-%d %H:%M UTC") }}{% if latest.pipeline_url %} · <a href="{{ latest.pipeline_url }}" rel="noopener">pipeline run</a>{% endif %}</span>
+</div>
+
+<h2>Findings in the latest build</h2>
+<form class="inline" method="get">
+  <label>Severity
+    <select name="severity">
+      <option value="">All</option>
+      {% for s in severities %}<option value="{{ s }}" {% if s == severity %}selected{% endif %}>{{ s|title }}</option>{% endfor %}
+    </select>
+  </label>
+  <label><input type="checkbox" name="fixable" value="true" {% if fixable %}checked{% endif %}> Fix available only</label>
+  <button type="submit">Filter</button>
+</form>
+<div class="table-wrap">
+{% if findings %}
+<table>
+  <thead><tr><th>Severity</th><th>ID</th><th>Package</th><th>Installed</th><th>Fixed in</th><th>Title</th></tr></thead>
+  <tbody>
+  {% for f in findings %}
+    <tr>
+      <td class="sev sev-{{ f.severity }}">{{ f.severity|title }}</td>
+      <td><code>{{ f.vuln_id }}</code></td>
+      <td>{{ f.package_name }}</td>
+      <td><code>{{ f.installed_version }}</code></td>
+      <td>{% if f.fixed_version %}<code class="fix">{{ f.fixed_version }}</code>{% else %}<span class="muted">no fix</span>{% endif %}</td>
+      <td>{{ f.title }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty muted">No findings match.</p>
+{% endif %}
+</div>
+
+<h2>Build history</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>When</th><th>Commit</th><th>Branch</th>
+    <th class="num">Critical</th><th class="num">High</th><th class="num">Medium</th><th class="num">Low</th><th>Pipeline</th></tr></thead>
+  <tbody>
+  {% for b in builds %}
+    <tr>
+      <td>{{ b.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+      <td><code>{{ b.commit_sha[:8] }}</code></td>
+      <td>{{ b.branch }}</td>
+      <td class="num sev sev-CRITICAL">{{ b.critical }}</td>
+      <td class="num sev sev-HIGH">{{ b.high }}</td>
+      <td class="num sev sev-MEDIUM">{{ b.medium }}</td>
+      <td class="num sev sev-LOW">{{ b.low }}</td>
+      <td>{% if b.pipeline_url %}<a href="{{ b.pipeline_url }}" rel="noopener">run</a>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty muted">No builds reported yet.</p>
+{% endif %}
+{% endblock %}
