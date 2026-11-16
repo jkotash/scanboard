@@ -38,4 +38,17 @@ jobs:
               run: ruff format --check . 
             - name: Run tests
               run: pytest -q
+    ci-passed:
+      name: CI passed
+      needs: test
+      if: always()
+      runs-on: ubuntu-latest
+      steps:
+        - name: Fail unless every test job succeeded
+          if: needs.test.result != 'success'
+          run: |
+            echo "Test jobs finished with: ${{ needs.test.results }}"
+            exit 1
+        - name: All test jobs passed
+          run: echo "All matrix jobs succeeded."
               
