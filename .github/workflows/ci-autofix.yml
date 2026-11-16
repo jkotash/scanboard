@@ -1,0 +1,87 @@
+name: CI autofix
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  autofix:
+    name: Propose a fix
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      !startsWith(github.event.workflow_run.head_branch, 'autofix/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+      id-token: write
+    steps:
+      - name: Check out the failing commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install the app and dev tools
+        run: pip install -e ".[dev]"
+
+      - name: Create the fix branch
+        id: branch
+        env:
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          safe=$(printf '%s' "$HEAD_BRANCH" | tr -cd 'a-zA-Z0-9/_.-')
+          name="autofix/${safe}-${RUN_ID}"
+          git switch -c "$name"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - name: Save the failed CI logs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FAILED_RUN: ${{ github.event.workflow_run.id }}
+        run: |
+          gh run view "$FAILED_RUN" --repo "$GITHUB_REPOSITORY" --log-failed \
+            | tail -n 300 > "$RUNNER_TEMP/ci-failure.log"
+
+      - name: Ask Claude for a fix
+        uses: anthropics/claude-code-action@d1f58ad5e6f4d2b79547e63e37c2116064135896 # v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            CI failed for PR #${{ github.event.workflow_run.pull_requests[0].number }}
+            on branch ${{ github.event.workflow_run.head_branch }}.
+            Failed run: ${{ github.event.workflow_run.html_url }}
+            The failed step logs are saved in ${{ runner.temp }}/ci-failure.log.
+
+            This is a Python FastAPI project. Tests are in tests/.
+
+            1. Read the log and find the root cause.
+            2. Decide whether the application code or the test is wrong, using the
+               code, the test fixtures, and the test's intent as evidence.
+            3. Make the smallest fix. Then run `ruff check .`, `ruff format --check .`
+               and `pytest -q` until all pass.
+            4. Commit on the current branch (${{ steps.branch.outputs.name }}), push it,
+               and open a PR into ${{ github.event.workflow_run.head_branch }} with
+               `gh pr create --base ${{ github.event.workflow_run.head_branch }}`.
+               In the PR body explain the root cause, what you changed, and why you
+               changed the code or the test rather than the other.
+
+            Never modify files under .github/. Never merge anything.
+          claude_args: >-
+            --max-turns 20
+            --allowedTools "Read,Edit,Glob,Grep,Bash(pytest:*),Bash(ruff:*),Bash(git:*),Bash(gh pr create:*)"
