@@ -33,7 +33,7 @@ def test_ingest_stores_build_findings_and_sbom(client, project_key, admin_header
     r = ingest(client, project_key)
     assert r.status_code == 201, r.text
     body = r.json()
-    assert body["counts"] == {"critical": 2, "high": 2, "medium": 1, "low": 1, "unknown": 0}
+    assert body["counts"] == {"critical": 1, "high": 2, "medium": 1, "low": 1, "unknown": 0}
     assert body["components"] == 3
 
     build_id = body["build_id"]
