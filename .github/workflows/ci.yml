@@ -124,6 +124,35 @@ jobs:
                 tags: ${{ steps.meta.outputs.tags }}
                 labels: ${{ steps.meta.outputs.labels }}
                 cache-from: type=gha
+  
+          - name: Scan (JSON for Scanboard)
+            if: github.event_name == 'push'
+            uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+            with:
+                image-ref: ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}
+                format: json
+                output: trivy.json
+                skip-setup-trivy: true
+
+          - name: Report to Scanboard
+            if: github.event_name == 'push'
+            continue-on-error: true
+            env:
+                SCANBOARD_URL: ${{ secrets.SCANBOARD_URL }}
+                SCANBOARD_API_KEY: ${{ secrets.SCANBOARD_API_KEY }}
+                IMAGE_REF: ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}
+                IMAGE_DIGEST: ${{ steps.push.outputs.digest }}
+                RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            run: |
+                curl -fsS -X POST "$SCANBOARD_URL/api/v1/ingest" \
+                  -H "Authorization: Bearer $SCANBOARD_API_KEY" \
+                  -F commit_sha="$GITHUB_SHA" \
+                  -F branch="$GITHUB_REF_NAME" \
+                  -F image_ref="$IMAGE_REF" \
+                  -F image_digest="$IMAGE_DIGEST" \
+                  -F pipeline_url="$RUN_URL" \
+                  -F vuln_report=@trivy.json \
+                  -F sbom=@sbom.cdx.json
 
     ci-passed:
       name: CI passed
