@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- build stage: install the app into a self-contained virtualenv ----
-FROM python:3.12-slim AS build
+FROM python:3.15-slim AS build
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 RUN python -m venv /venv
 ENV PATH=/venv/bin:$PATH
@@ -11,7 +11,7 @@ COPY app ./app
 RUN pip install .
 
 # ---- runtime stage: just Python + the venv, running as non-root ----
-FROM python:3.12-slim
+FROM python:3.15-slim
 RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin scanboard \
  && mkdir /data && chown scanboard /data
 COPY --from=build /venv /venv
