@@ -19,7 +19,7 @@ any pipeline: build image → trivy (JSON) + SBOM (CycloneDX) → POST /api/v1/i
 
 1. Run it:
    ```bash
-   docker run -d -p 8000:8000 -v scanboard:/data -e ADMIN_TOKEN=$(openssl rand -hex 32) ghcr.io/jkotash/scanboard:latest
+   docker run -d -p 8000:8000 -v scanboard:/data -e ADMIN_TOKEN=$(openssl rand -hex 32) ghcr.io/johnkotash/scanboard:latest
    ```
    Or, from a clone: `ADMIN_TOKEN=... docker compose up -d`
 2. Create a project and an ingest key:
