@@ -59,7 +59,7 @@ jobs:
             | tail -n 300 > "$RUNNER_TEMP/ci-failure.log"
 
       - name: Ask Claude for a fix
-        uses: anthropics/claude-code-action@d1f58ad5e6f4d2b79547e63e37c2116064135896 # v1
+        uses: anthropics/claude-code-action@acfe7992852970efb4fee683d63d628e3e52df67 # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
